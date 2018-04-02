@@ -24,7 +24,7 @@ using namespace std;
 
 const double tolerance = 0.000001;// 1e-6
 static default_random_engine gen;
-
+const double initial_weight = 1.0;
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	// TODO: Set the number of particles. Initialize all particles to first position (based on estimates of 
 	//   x, y, theta and their uncertainties from GPS) and all weights to 1. 
@@ -44,12 +44,13 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	  p.x = nd_x_init(gen);
 	  p.y = nd_y_init(gen);
 	  p.theta = nd_theta_init(gen);
-	  p.weight = 1.0; // setting intial weight to 1
+	  p.weight = initial_weight; // setting intial weight to 1
 
 	  particles.push_back(p);
-    weights.push_back(1.0);
+    weights.push_back(initial_weight);
 	}
 
+	// set is_initialized to ensure that we call init only at startup
 	is_initialized = true;
 
 }
@@ -177,7 +178,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     /***************************************************
      * Associate the transformed observations to the nearest landmark on the map
     ****************************************************/
-	  // clear associations
+	  // clear earlier associations
 	  particles[i].associations.clear();
 	  particles[i].sense_x.clear();
 	  particles[i].sense_y.clear();
@@ -189,7 +190,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
      * Update the weight of the particle by applying the multivariate probability density functions
     ****************************************************/
     // reinitialize the particle weight to 1
-    double weight = 1.0;
+    double weight = initial_weight;
     bool updatedWeightOfParticle = false;
 	  // Iterate through all the observations (in map frame)
     for (unsigned om = 0; om < observations_map.size(); ++om){
@@ -220,7 +221,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
       }
 
-
       // Only calculate and update weights if an associated landmark is found for this observation
       if (!foundAssociatedLandmark){
         cout << "Did not find an associated landmark for observation id: " << obs_id << " particle number:" << i << std::endl;
@@ -234,7 +234,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
         // std_x and  std_y are always positive, and so the den has to be always positive, avoiding a divide by zero if std_x or std_y have been set to zero
         if (den > 0.0){
-          double weight_obs = exp(-(pow(obs_x - associated_landmark_x, 2)/(2*pow(sigma_landmark_x,2))+ pow(obs_y - associated_landmark_y, 2)/(2*pow(sigma_landmark_y,2))))/den;
+          const double weight_obs = exp(-(pow(obs_x - associated_landmark_x, 2)/(2*pow(sigma_landmark_x,2))+ pow(obs_y - associated_landmark_y, 2)/(2*pow(sigma_landmark_y,2))))/den;
 
           // Combine the probabilities of all the measurements by taking the product
           weight *= weight_obs;
