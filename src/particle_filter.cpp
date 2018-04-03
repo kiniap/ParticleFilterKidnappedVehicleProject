@@ -17,13 +17,13 @@
 #include <bits/random.h>
 #include <bits/opt_random.h>
 #include <bits/random.tcc>
+#include <utility>
 
 #include "particle_filter.h"
 
 using namespace std;
 
 const double tolerance = 0.000001;// 1e-6
-static default_random_engine gen;
 const double initial_weight = 1.0;
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	// TODO: Set the number of particles. Initialize all particles to first position (based on estimates of 
@@ -33,7 +33,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
 	// TODO: what is the right number of particles?
 	num_particles = 100;
-
+	default_random_engine gen(time(0));
 	normal_distribution<double> nd_x_init(x,std[0]);
 	normal_distribution<double> nd_y_init(y,std[1]);
 	normal_distribution<double> nd_theta_init(theta, std[2]);
@@ -60,6 +60,8 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
+
+  default_random_engine gen(time(0));
 
 	normal_distribution<double> nd_x(0, std_pos[0]);
 	normal_distribution<double> nd_y(0, std_pos[1]);
@@ -265,6 +267,7 @@ void ParticleFilter::resample() {
 	// TODO: Resample particles with replacement with probability proportional to their weight. 
 	// NOTE: You may find std::discrete_distribution helpful here.
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
+  default_random_engine gen(time(0));
   discrete_distribution<int> dd_index(weights.begin(), weights.end());
 
   if (particles.size() != num_particles)
@@ -278,7 +281,7 @@ void ParticleFilter::resample() {
   }
 
   // replace particles with resampled particles
-  particles = resampled_particles;
+  particles = std::move(resampled_particles);
 }
 
 Particle ParticleFilter::SetAssociations(Particle& particle, const std::vector<int>& associations, 
